@@ -122,14 +122,52 @@ function validateToc(tocRaw: string): { valid: boolean; error?: string; chapters
 }
 
 /**
- * Applies corrections from dictionary to text
+ * Capitalizes the first character of a string
  */
-function applyCorrections(text: string, dictionary: { [key: string]: string }): string {
+function capitalizeFirst(str: string): string {
+	if (!str) return str;
+	return str.charAt(0).toUpperCase() + str.slice(1);
+}
+
+/**
+ * Applies corrections from dictionary to text, preserving capitalization
+ * Example: "uớc" -> "ước", "Uớc" -> "Ước"
+ */
+/**
+ * Applies text corrections using a dictionary.
+ * Preserves capitalization (e.g., "Apple" → "Táo" if "apple": "táo").
+ */
+export function applyCorrections(text: string, dictionary: Record<string, string>): string {
 	let correctedText = text;
+
 	for (const wrong in dictionary) {
-		const regex = new RegExp(`\\b${wrong.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}\\b`, 'g');
-		correctedText = correctedText.replace(regex, dictionary[wrong]);
+		const correct = dictionary[wrong];
+
+		// Escape regex special characters
+		const escapedWrong = wrong.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+
+		// Check if the "wrong" word contains non-word characters.
+		// If it does, we treat it as a literal pattern and don't use word boundaries.
+		// The character set includes Vietnamese characters.
+		const isComplexPattern =
+			/[^a-zA-Zàáâãèéêìíòóôõùúýăđĩũơưạảấầẩẫậắằẳẵặẹẻẽếềểễệỉịọỏốồổỗộớờởỡợụủứừửữựỳỵỷỹ]/.test(
+				wrong
+			);
+
+		// Use word boundaries only for simple words, not for complex patterns.
+		const regex = isComplexPattern
+			? new RegExp(escapedWrong, 'gi')
+			: new RegExp(`\\b${escapedWrong}\\b`, 'gi');
+
+		correctedText = correctedText.replace(regex, (match) => {
+			// Capitalize if original matched word starts with an uppercase letter
+			if (/[A-ZÀÁÂÃÈÉÊÌÍÒÓÔÕÙÚÝĂĐĨŨƠƯẠẢẤẦẨẪẬẮẰẲẴẶẸẺẼẾỀỂỄỆỈỊỌỎỐỒỔỖỘỚỜỞỠỢỤỦỨỪỬỮỰỲỴỶỸ]/.test(match[0])) {
+				return capitalizeFirst(correct);
+			}
+			return correct;
+		});
 	}
+
 	return correctedText;
 }
 
@@ -257,6 +295,40 @@ async function performOcr(
 }
 
 /**
+ * Applies corrections to all OCR text files.
+ */
+async function applyCorrectionsToOcrFiles(
+	ocrDir: string,
+	correctionDict: { [key: string]: string },
+	sendProgress: (msg: string) => void
+): Promise<void> {
+	if (Object.keys(correctionDict).length === 0) {
+		sendProgress('No correction dictionary loaded, skipping correction step.');
+		return;
+	}
+
+	sendProgress('Applying corrections to OCR files...');
+	const ocrFiles = await fs.readdir(ocrDir);
+
+	for (let i = 0; i < ocrFiles.length; i++) {
+		const ocrFile = ocrFiles[i];
+		const ocrPath = path.join(ocrDir, ocrFile);
+		const percentage = Math.round(((i + 1) / ocrFiles.length) * 100);
+		sendProgress(`Correcting file ${i + 1}/${ocrFiles.length} (${percentage}%)...`);
+
+		try {
+			const text = await fs.readFile(ocrPath, 'utf-8');
+			const correctedText = applyCorrections(text, correctionDict);
+			await fs.writeFile(ocrPath, correctedText);
+		} catch (error) {
+			const message = error instanceof Error ? error.message : 'Unknown error';
+			sendProgress(`Warning: Could not correct file ${ocrFile}: ${message}`);
+		}
+	}
+	sendProgress('Correction of OCR files complete.');
+}
+
+/**
  * Generates final chapters with Introduction and Appendices if needed
  */
 function generateFinalChapters(
@@ -348,7 +420,6 @@ async function generateEpub(
 	ocrDir: string,
 	pageOffset: number,
 	totalPdfPages: number,
-	correctionDict: { [key: string]: string },
 	vietnameseDict: Set<string>,
 	bookTitle: string
 ): Promise<{ epub: Buffer; abnormalWords: Map<string, Set<number>> }> {
@@ -392,8 +463,7 @@ async function generateEpub(
 
 			const ocrPath = path.join(ocrDir, `page-${imageIndex}.txt`);
 			try {
-				let text = await fs.readFile(ocrPath, 'utf-8');
-				text = applyCorrections(text, correctionDict);
+				const text = await fs.readFile(ocrPath, 'utf-8');
 
 				findAbnormalWords(text, vietnameseDict, j, abnormalWords);
 
@@ -574,6 +644,9 @@ app.post('/api/convert', async (c) => {
 				sendProgress('Correction dictionary not found, skipping correction.');
 			}
 
+			// Apply corrections to OCR files
+			await applyCorrectionsToOcrFiles(ocrOutputDir, correctionDict, sendProgress);
+
 			const { dictionary: vietnameseDict, loaded: vietnameseLoaded } =
 				await loadVietnameseDictionary();
 			if (vietnameseLoaded) {
@@ -604,7 +677,6 @@ app.post('/api/convert', async (c) => {
 				ocrOutputDir,
 				pageOffset,
 				totalPdfPages,
-				correctionDict,
 				vietnameseDict,
 				bookTitle
 			);
