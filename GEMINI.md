@@ -184,34 +184,36 @@ The `logger` provides structured, level-based logging. It must be created at `sr
 
 ```typescript
 // src/lib/utils/logger.ts
-import pino, { multistream } from "pino";
-import pretty from "pino-pretty";
+import pino, { multistream } from 'pino';
+import pretty from 'pino-pretty';
 
-const LOG_FILE_PATH = "logs/logger.jsonl";
+const LOG_FILE_PATH = 'logs/logger.jsonl';
 
 /**
  * Returns a custom timestamp string in GMT+7 (Asia/Ho_Chi_Minh) timezone.
  * Format: dd/mm/yy HH:MM:ss
  */
 function gmt7Time(): string {
-  const [time, date] = new Date().toLocaleString("vi-VN", {
-    timeZone: "Asia/Ho_Chi_Minh",
-    day: "2-digit",
-    month: "2-digit",
-    year: "2-digit",
-    hour: "2-digit",
-    minute: "2-digit",
-    second: "2-digit",
-  }).split(" ");
-  return `,"time":"${date} ${time}"`;
+	const [time, date] = new Date()
+		.toLocaleString('vi-VN', {
+			timeZone: 'Asia/Ho_Chi_Minh',
+			day: '2-digit',
+			month: '2-digit',
+			year: '2-digit',
+			hour: '2-digit',
+			minute: '2-digit',
+			second: '2-digit'
+		})
+		.split(' ');
+	return `,"time":"${date} ${time}"`;
 }
 
 /**
  * Pretty console output stream (colorized, human-readable).
  */
 const consoleStream = pretty({
-  colorize: true,
-  translateTime: false,
+	colorize: true,
+	translateTime: false
 });
 
 /**
@@ -219,8 +221,8 @@ const consoleStream = pretty({
  * The directory will be created automatically if it does not exist.
  */
 const fileStream = pino.destination({
-  dest: LOG_FILE_PATH,
-  mkdir: true,
+	dest: LOG_FILE_PATH,
+	mkdir: true
 });
 
 /**
@@ -245,16 +247,19 @@ const fileStream = pino.destination({
  * authLog.info({ userId }, 'User logged in');
  */
 export const logger = pino(
-  {
-    level: "debug",
-    base: {}, // remove pid and hostname from output
-    timestamp: gmt7Time,
-    formatters: {
-      // Show string level ("info") instead of number (30)
-      level: label => ({ level: label }),
-    },
-  },
-  multistream([{ stream: consoleStream, level: "debug" }, { stream: fileStream, level: "debug" },]),
+	{
+		level: 'debug',
+		base: {}, // remove pid and hostname from output
+		timestamp: gmt7Time,
+		formatters: {
+			// Show string level ("info") instead of number (30)
+			level: (label) => ({ level: label })
+		}
+	},
+	multistream([
+		{ stream: consoleStream, level: 'debug' },
+		{ stream: fileStream, level: 'debug' }
+	])
 );
 ```
 

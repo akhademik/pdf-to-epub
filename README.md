@@ -4,22 +4,22 @@ This project is a web-based utility to convert PDF files into EPUB format. It us
 
 ## Key Features
 
--   **PDF to EPUB Conversion**: Upload any PDF and receive a downloadable EPUB file.
--   **OCR Text Extraction**: Utilizes Tesseract.js to perform Optical Character Recognition on each page of the PDF.
--   **Custom Table of Contents**: Define your own chapters and page ranges.
--   **Page Number Correction**: A simple offset can be provided to map book page numbers to PDF page numbers.
--   **Full Content Preservation**: Any pages not included in your custom table of contents are automatically grouped into "Introduction" and "Appendices" chapters, ensuring no content is lost.
--   **Web-Based Interface**: Simple and easy-to-use interface built with SvelteKit.
+- **PDF to EPUB Conversion**: Upload any PDF and receive a downloadable EPUB file.
+- **OCR Text Extraction**: Utilizes Tesseract.js to perform Optical Character Recognition on each page of the PDF.
+- **Custom Table of Contents**: Define your own chapters and page ranges.
+- **Page Number Correction**: A simple offset can be provided to map book page numbers to PDF page numbers.
+- **Full Content Preservation**: Any pages not included in your custom table of contents are automatically grouped into "Introduction" and "Appendices" chapters, ensuring no content is lost.
+- **Web-Based Interface**: Simple and easy-to-use interface built with SvelteKit.
 
 ## Tech Stack
 
--   **Framework**: [SvelteKit](https://kit.svelte.dev/)
--   **API Backend**: [Hono](https://hono.dev/) on Node.js
--   **OCR**: [Tesseract.js](https://tesseract.projectnaptha.com/)
--   **PDF Processing**: [pdf-to-img](https://www.npmjs.com/package/pdf-to-img)
--   **EPUB Generation**: [JSZip](https://stuk.github.io/jszip/)
--   **Styling**: [Tailwind CSS](https://tailwindcss.com/)
--   **Language**: [TypeScript](https://www.typescriptlang.org/)
+- **Framework**: [SvelteKit](https://kit.svelte.dev/)
+- **API Backend**: [Hono](https://hono.dev/) on Node.js
+- **OCR**: [Tesseract.js](https://tesseract.projectnaptha.com/)
+- **PDF Processing**: [pdf-to-img](https://www.npmjs.com/package/pdf-to-img)
+- **EPUB Generation**: [JSZip](https://stuk.github.io/jszip/)
+- **Styling**: [Tailwind CSS](https://tailwindcss.com/)
+- **Language**: [TypeScript](https://www.typescriptlang.org/)
 
 ## How It Works
 
@@ -33,13 +33,14 @@ This project is a web-based utility to convert PDF files into EPUB format. It us
 
 This project relies on the `pdf-to-img` library, which requires a system-level dependency to function.
 
--   **Linux/macOS**: You must have `poppler-utils` installed.
-    -   On Debian/Ubuntu: `sudo apt-get install poppler-utils`
-    -   On macOS (with Homebrew): `brew install poppler`
+- **Linux/macOS**: You must have `poppler-utils` installed.
+  - On Debian/Ubuntu: `sudo apt-get install poppler-utils`
+  - On macOS (with Homebrew): `brew install poppler`
 
 ## Getting Started
 
 1.  **Clone the repository:**
+
     ```sh
     git clone git@github.com:akhademik/pdf-to-epub.git
     cd pdf-to-epub
@@ -47,6 +48,7 @@ This project relies on the `pdf-to-img` library, which requires a system-level d
 
 2.  **Install dependencies:**
     This project uses `pnpm`.
+
     ```sh
     pnpm install
     ```
