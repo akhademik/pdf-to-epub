@@ -75,8 +75,18 @@ export async function generateEpub(
 	);
 	oebps.file('style.css', cssContent);
 
-	const abnormalWords = new Map<string, Set<number>>();
 	let opfManifest = '<item id="css" href="style.css" media-type="text/css"/>';
+	const imageDir = path.join(ocrDir, '..', 'images');
+	const coverImagePath = path.join(imageDir, 'page-1.png');
+	try {
+		const coverImageContent = await fs.readFile(coverImagePath);
+		oebps.file('cover.png', coverImageContent);
+		opfManifest += '<item id="cover-image" href="cover.png" media-type="image/png"/>';
+	} catch (_error) {
+		console.warn('Cover image not found, skipping.');
+	}
+
+	const abnormalWords = new Map<string, Set<number>>();
 	let opfSpine = '';
 	let tocNcx = '';
 	let playOrder = 1;
@@ -141,6 +151,7 @@ export async function generateEpub(
     <dc:creator opf:role="aut">pdf-to-epub</dc:creator>
     <dc:identifier id="book-id">urn:uuid:${crypto.randomUUID()}</dc:identifier>
     <dc:language>vi</dc:language>
+    <meta name="cover" content="cover-image" />
   </metadata>
   <manifest>
     <item id="ncx" href="toc.ncx" media-type="application/x-dtbncx+xml"/>
@@ -149,6 +160,9 @@ export async function generateEpub(
   <spine toc="ncx">
     ${opfSpine}
   </spine>
+  <guide>
+    <reference type="cover" title="Cover" href="cover.png"/>
+  </guide>
 </package>`
 	);
 
