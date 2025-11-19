@@ -126,13 +126,11 @@
 	{/if}
 
 	{#if epubDownloadLink}
-		<!-- eslint-disable-next-line svelte/no-navigation-without-resolve -->
-		<a
-			href={epubDownloadLink}
-			download="converted.epub"
+		<button
+			on:click={() => window.open(epubDownloadLink, '_blank')}
 			class="mt-4 inline-block rounded-md bg-green-500 px-4 py-2 text-white no-underline"
 		>
 			Download EPUB
-		</a>
+		</button>
 	{/if}
 </div>
