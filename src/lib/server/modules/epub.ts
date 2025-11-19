@@ -8,6 +8,35 @@ import { parsePageRange, sanitizeXml } from './utils';
 import { findAbnormalWords } from './dictionary';
 
 /**
+ * Formats raw text into HTML paragraphs.
+ * @param text - The raw text from OCR.
+ * @returns An HTML string with paragraphs.
+ */
+function formatTextAsHtml(text: string): string {
+	const lines = text.split('\n');
+	const paragraphs: string[] = [];
+	let currentParagraph: string[] = [];
+
+	for (const line of lines) {
+		const trimmedLine = line.trim();
+		if (trimmedLine === '') {
+			if (currentParagraph.length > 0) {
+				paragraphs.push(`<p>${currentParagraph.join(' ')}</p>`);
+				currentParagraph = [];
+			}
+		} else {
+			currentParagraph.push(sanitizeXml(trimmedLine));
+		}
+	}
+
+	if (currentParagraph.length > 0) {
+		paragraphs.push(`<p>${currentParagraph.join(' ')}</p>`);
+	}
+
+	return paragraphs.join('\n');
+}
+
+/**
  * Generates EPUB content
  */
 export async function generateEpub(
@@ -40,8 +69,14 @@ export async function generateEpub(
 	const chaptersFolder = oebps.folder('chapters');
 	if (!chaptersFolder) throw new Error('Failed to create chapters folder');
 
+	const cssContent = await fs.readFile(
+		path.join(process.cwd(), 'src/lib/server/epub-style.css'),
+		'utf-8'
+	);
+	oebps.file('style.css', cssContent);
+
 	const abnormalWords = new Map<string, Set<number>>();
-	let opfManifest = '';
+	let opfManifest = '<item id="css" href="style.css" media-type="text/css"/>';
 	let opfSpine = '';
 	let tocNcx = '';
 	let playOrder = 1;
@@ -62,7 +97,7 @@ export async function generateEpub(
 
 				await findAbnormalWords(text, vietnameseDict, j, abnormalWords);
 
-				chapterContent += sanitizeXml(text).replace(/\n/g, '<br/>');
+				chapterContent += formatTextAsHtml(text);
 			} catch {
 				// Ignore missing pages
 			}
@@ -78,10 +113,11 @@ export async function generateEpub(
 <html xmlns="http://www.w3.org/1999/xhtml">
 <head>
   <title>${sanitizeXml(chapter.title)}</title>
+  <link rel="stylesheet" type="text/css" href="../style.css" />
 </head>
 <body>
-  <h1>${sanitizeXml(chapter.title)}</h1>
-  <p>${chapterContent}</p>
+  <h2>${sanitizeXml(chapter.title)}</h2>
+  ${chapterContent}
 </body>
 </html>`
 		);

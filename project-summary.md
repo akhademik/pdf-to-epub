@@ -33,7 +33,7 @@ The application allows users to upload a PDF file, provide a custom table of con
       - Uses the `pdf-to-img` library to convert each page of the PDF into a PNG image.
       - Uses `tesseract.js` to perform OCR on each image to extract the text content.
       - Applies a series of text corrections using a predefined dictionary (`replace-dict.json`) to fix common OCR errors.
-      - Uses `jszip` to construct an EPUB file from the extracted and corrected text, following the structure defined by the user's TOC.
+      - Uses `jszip` to construct an EPUB file from the extracted and corrected text, following the structure defined by the user's TOC. The EPUB is styled with a custom CSS file (`epub-style.css`).
       - If no TOC is provided, it treats the entire book as a single chapter. It also automatically adds "Introduction" and "Appendices" sections for pages not covered by the user's TOC.
       - Saves the generated `.epub` file to the temporary directory.
       - Identifies and logs "abnormal" words (words not found in `viet-dict.txt` or `ignore-dict.json`) to a separate file for later review.
