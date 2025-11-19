@@ -9,7 +9,7 @@ The application allows users to upload a PDF file, provide a custom table of con
 ## Project Structure
 
 - **Frontend**: Built with SvelteKit. The main user interface is in `src/routes/+page.svelte`.
-- **Backend**: A Hono server running on Node.js. The backend logic is located in `src/lib/server/index.ts` and is broken down into smaller modules in the `src/lib/server/modules` directory. The server is exposed via server-side hooks in `src/hooks.server.ts`.
+- **Backend**: A Hono server running on Node.js. The backend logic is located in `src/lib/server/index.ts` and is broken down into smaller modules in the `src/lib/server/modules` directory. The server is exposed via server-side hooks in `src/hooks.server.ts`. Configuration is stored in `src/lib/server/modules/config.ts`.
 - **Styling**: Tailwind CSS.
 - **Package Manager**: pnpm.
 

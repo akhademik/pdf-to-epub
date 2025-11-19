@@ -1,4 +1,7 @@
 // src/lib/server/modules/config.ts
+export const VIETNAMESE_CHARACTERS =
+	'a-zA-Zàáâãèéêìíòóôõùúýăđĩũơưạảấầẩẫậắằẳẵặẹẻẽếềểễệỉịọỏốồổỗộớờởỡợụủứừửữựỳỵỷỹ';
+
 export const CONFIG = {
 	PDF_SCALE: 1.5,
 	OCR_LANGUAGE: 'vie',

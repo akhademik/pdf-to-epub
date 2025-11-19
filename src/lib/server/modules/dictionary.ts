@@ -2,6 +2,7 @@
 import fs from 'fs/promises';
 import path from 'path';
 import { capitalizeFirst } from './utils';
+import { VIETNAMESE_CHARACTERS } from './config';
 
 /**
  * Applies text corrections using a dictionary.
@@ -14,13 +15,12 @@ export function applyCorrections(text: string, dictionary: Record<string, string
 		const correct = dictionary[wrong];
 
 		// Escape regex special characters
-		const escapedWrong = wrong.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+		const escapedWrong = wrong.replace(/[.*+?^${}()|[\\]/g, '\\$&');
 
 		// Check if the "wrong" word contains non-word characters.
 		// If it does, we treat it as a literal pattern and don't use word boundaries.
 		// The character set includes Vietnamese characters.
-		const isComplexPattern =
-			/[^a-zA-Zàáâãèéêìíòóôõùúýăđĩũơưạảấầẩẫậắằẳẵặẹẻẽếềểễệỉịọỏốồổỗộớờởỡợụủứừửữựỳỵỷỹ]/.test(wrong);
+		const isComplexPattern = new RegExp(`[^${VIETNAMESE_CHARACTERS}]`).test(wrong);
 
 		// Use word boundaries only for simple words, not for complex patterns.
 		const regex = isComplexPattern
@@ -29,9 +29,7 @@ export function applyCorrections(text: string, dictionary: Record<string, string
 
 		correctedText = correctedText.replace(regex, (match) => {
 			// Capitalize if original matched word starts with an uppercase letter
-			if (
-				/[A-ZÀÁÂÃÈÉÊÌÍÒÓÔÕÙÚÝĂĐĨŨƠƯẠẢẤẦẨẪẬẮẰẲẴẶẸẺẼẾỀỂỄỆỈỊỌỎỐỒỔỖỘỚỜỞỠỢỤỦỨỪỬỮỰỲỴỶỸ]/.test(match[0])
-			) {
+			if (new RegExp(`[${VIETNAMESE_CHARACTERS.toUpperCase()}]`).test(match[0])) {
 				return capitalizeFirst(correct);
 			}
 			return correct;
@@ -94,7 +92,7 @@ export function findAbnormalWords(
 		text
 			.normalize('NFC')
 			.toLowerCase()
-			.match(/[a-zA-Zàáâãèéêìíòóôõùúýăđĩũơưạảấầẩẫậắằẳẵặẹẻẽếềểễệỉịọỏốồổỗộớờởỡợụủứừửữựỳỵỷỹ]+/g) || [];
+			.match(new RegExp(`[${VIETNAMESE_CHARACTERS}]+`, 'g')) || [];
 
 	for (const word of words) {
 		if (word.length > 1 && !predefinedDict.has(word)) {
