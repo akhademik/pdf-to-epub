@@ -60,7 +60,7 @@ export async function generateEpub(
 			try {
 				const text = await fs.readFile(ocrPath, 'utf-8');
 
-				findAbnormalWords(text, vietnameseDict, j, abnormalWords);
+				await findAbnormalWords(text, vietnameseDict, j, abnormalWords);
 
 				chapterContent += sanitizeXml(text).replace(/\n/g, '<br/>');
 			} catch {

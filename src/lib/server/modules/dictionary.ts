@@ -47,7 +47,7 @@ export async function loadCorrectionDictionary(): Promise<{
 	loaded: boolean;
 }> {
 	try {
-		const dictionaryPath = path.join(process.cwd(), 'src/lib/server/correction-dictionary.json');
+		const dictionaryPath = path.join(process.cwd(), 'src/lib/server/replace-dict.json');
 		const dictionaryContent = await fs.readFile(dictionaryPath, 'utf-8');
 		const dictionary = JSON.parse(dictionaryContent);
 		return { dictionary, loaded: true };
@@ -66,7 +66,7 @@ export async function loadVietnameseDictionary(): Promise<{
 	loaded: boolean;
 }> {
 	try {
-		const dictPath = path.join(process.cwd(), 'src/lib/server/vietnamese-dictionary.txt');
+		const dictPath = path.join(process.cwd(), 'src/lib/server/viet-dict.txt');
 		const dictContent = await fs.readFile(dictPath, 'utf-8');
 		const dictionary = new Set(dictContent.split('\n').map((word) => word.trim().toLowerCase()));
 		return { dictionary, loaded: true };
@@ -78,16 +78,33 @@ export async function loadVietnameseDictionary(): Promise<{
 }
 
 /**
+ * Loads ignore words from file
+ */
+export async function loadIgnoreWords(): Promise<Set<string>> {
+	try {
+		const ignoreWordsPath = path.join(process.cwd(), 'src/lib/server/ignore-dict.json');
+		const ignoreWordsContent = await fs.readFile(ignoreWordsPath, 'utf-8');
+		const ignoreWords = JSON.parse(ignoreWordsContent);
+		return new Set(ignoreWords.map((word: string) => word.toLowerCase()));
+	} catch (error) {
+		const message = error instanceof Error ? error.message : 'Unknown error';
+		console.warn(`Ignore words file not loaded: ${message}`);
+		return new Set();
+	}
+}
+
+/**
  * Finds abnormal words in text
  */
-export function findAbnormalWords(
+export async function findAbnormalWords(
 	text: string,
 	predefinedDict: Set<string>,
 	pageNumber: number,
 	abnormalWords: Map<string, Set<number>>
-): void {
+): Promise<void> {
 	if (predefinedDict.size === 0) return;
 
+	const ignoreWords = await loadIgnoreWords();
 	const words =
 		text
 			.normalize('NFC')
@@ -95,7 +112,7 @@ export function findAbnormalWords(
 			.match(new RegExp(`[${VIETNAMESE_CHARACTERS}]+`, 'g')) || [];
 
 	for (const word of words) {
-		if (word.length > 1 && !predefinedDict.has(word)) {
+		if (word.length > 1 && !predefinedDict.has(word) && !ignoreWords.has(word)) {
 			if (!abnormalWords.has(word)) {
 				abnormalWords.set(word, new Set<number>());
 			}
