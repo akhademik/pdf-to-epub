@@ -81,8 +81,12 @@ app.post('/api/convert', async (c) => {
 			}
 
 			// Create temp directory
+			const bookName = pdfFile.name.replace(/\.pdf$/i, '');
+			const sanitizedBookName = bookName.replace(/[\s/\\?%*:|"<>]/g, '_');
 			const hash = crypto.createHash('md5').update(pdfFile.name).digest('hex');
-			tempDir = path.join(process.cwd(), CONFIG.TEMP_DIR, `pdf-to-epub-${hash}`);
+			const shortHash = hash.substring(0, 8);
+			const tempDirName = `${sanitizedBookName}-${shortHash}`;
+			tempDir = path.join(process.cwd(), CONFIG.TEMP_DIR, tempDirName);
 			await fs.mkdir(tempDir, { recursive: true });
 
 			const pdfPath = path.join(tempDir, pdfFile.name);
@@ -172,7 +176,7 @@ app.post('/api/convert', async (c) => {
 				);
 			}
 
-			const downloadUrl = `/api/download/${hash}/${epubFilename}`;
+			const downloadUrl = `/api/download/${tempDirName}/${epubFilename}`;
 			sendProgress(`download:${downloadUrl}`);
 		} catch (error) {
 			const message = error instanceof Error ? error.message : 'Unknown error';
@@ -194,18 +198,19 @@ app.post('/api/convert', async (c) => {
 	});
 });
 
-app.get('/api/download/:hash/:filename', async (c) => {
-	const { hash, filename } = c.req.param();
+app.get('/api/download/:dir/:filename', async (c) => {
+	const { dir, filename } = c.req.param();
 
-	// Validate hash
-	if (!isValidHash(hash)) {
-		return c.text('Invalid hash format.', 400);
+	// Validate dir to prevent path traversal
+	const tempDirPath = path.join(process.cwd(), CONFIG.TEMP_DIR);
+	const tempDir = path.resolve(tempDirPath, dir);
+	if (!tempDir.startsWith(tempDirPath)) {
+		return c.text('Invalid directory.', 400);
 	}
 
 	// Sanitize filename
 	const safeFilename = path.basename(filename);
 
-	const tempDir = path.join(process.cwd(), CONFIG.TEMP_DIR, `pdf-to-epub-${hash}`);
 	const filePath = path.join(tempDir, safeFilename);
 
 	try {
