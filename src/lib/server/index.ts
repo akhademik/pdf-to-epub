@@ -10,7 +10,11 @@ import { CONFIG } from './modules/config';
 import type { Chapter } from './modules/types';
 import { isValidHash } from './modules/utils';
 import { validateToc, generateFinalChapters } from './modules/toc';
-import { loadCorrectionDictionary, loadVietnameseDictionary } from './modules/dictionary';
+import {
+	loadCorrectionDictionary,
+	loadVietnameseDictionary,
+	loadEnglishDictionary
+} from './modules/dictionary';
 import { performOcr, applyCorrectionsToOcrFiles } from './modules/ocr';
 import { convertPdfToImages } from './modules/pdf';
 import { generateEpub } from './modules/epub';
@@ -130,6 +134,13 @@ app.post('/api/convert', async (c) => {
 				sendProgress('Vietnamese dictionary not found, skipping abnormal word check.');
 			}
 
+			const { dictionary: englishDict, loaded: englishLoaded } = await loadEnglishDictionary();
+			if (englishLoaded) {
+				sendProgress('English dictionary loaded for error checking.');
+			} else {
+				sendProgress('English dictionary not found, skipping abnormal word check.');
+			}
+
 			// Calculate page ranges
 			const ocrFiles = await fs.readdir(ocrOriginalDir);
 			const totalPdfPages = ocrFiles.length;
@@ -153,6 +164,7 @@ app.post('/api/convert', async (c) => {
 				pageOffset,
 				totalPdfPages,
 				vietnameseDict,
+				englishDict,
 				bookTitle
 			);
 

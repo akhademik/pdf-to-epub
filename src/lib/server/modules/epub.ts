@@ -45,6 +45,7 @@ export async function generateEpub(
 	pageOffset: number,
 	totalPdfPages: number,
 	vietnameseDict: Set<string>,
+	englishDict: Set<string>,
 	bookTitle: string
 ): Promise<{ epub: Buffer; abnormalWords: Map<string, Set<number>> }> {
 	const zip = new JSZip();
@@ -105,7 +106,7 @@ export async function generateEpub(
 			try {
 				const text = await fs.readFile(ocrPath, 'utf-8');
 
-				await findAbnormalWords(text, vietnameseDict, j, abnormalWords);
+				await findAbnormalWords(text, vietnameseDict, englishDict, j, abnormalWords);
 
 				chapterContent += formatTextAsHtml(text);
 			} catch {

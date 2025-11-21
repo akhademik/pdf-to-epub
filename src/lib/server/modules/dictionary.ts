@@ -94,11 +94,31 @@ export async function loadIgnoreWords(): Promise<Set<string>> {
 }
 
 /**
+ * Loads English dictionary for word validation
+ */
+export async function loadEnglishDictionary(): Promise<{
+	dictionary: Set<string>;
+	loaded: boolean;
+}> {
+	try {
+		const dictPath = path.join(process.cwd(), 'src/lib/server/eng-dict.txt');
+		const dictContent = await fs.readFile(dictPath, 'utf-8');
+		const dictionary = new Set(dictContent.split('\n').map((word) => word.trim().toLowerCase()));
+		return { dictionary, loaded: true };
+	} catch (error) {
+		const message = error instanceof Error ? error.message : 'Unknown error';
+		console.warn(`English dictionary not loaded: ${message}`);
+		return { dictionary: new Set(), loaded: false };
+	}
+}
+
+/**
  * Finds abnormal words in text
  */
 export async function findAbnormalWords(
 	text: string,
 	predefinedDict: Set<string>,
+	englishDict: Set<string>,
 	pageNumber: number,
 	abnormalWords: Map<string, Set<number>>
 ): Promise<void> {
@@ -109,10 +129,15 @@ export async function findAbnormalWords(
 		text
 			.normalize('NFC')
 			.toLowerCase()
-			.match(new RegExp(`[${VIETNAMESE_CHARACTERS}]+`, 'g')) || [];
+			.match(new RegExp(`[${VIETNAMESE_CHARACTERS}a-zA-Z]+`, 'g')) || [];
 
 	for (const word of words) {
-		if (word.length > 1 && !predefinedDict.has(word) && !ignoreWords.has(word)) {
+		if (
+			word.length > 1 &&
+			!predefinedDict.has(word) &&
+			!ignoreWords.has(word) &&
+			!englishDict.has(word)
+		) {
 			if (!abnormalWords.has(word)) {
 				abnormalWords.set(word, new Set<number>());
 			}
