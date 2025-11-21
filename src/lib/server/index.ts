@@ -105,8 +105,8 @@ app.post('/api/convert', async (c) => {
 			await convertPdfToImages(pdfPath, imageOutputDir, sendProgress);
 
 			// Perform OCR
-			const ocrOutputDir = path.join(tempDir, 'ocr');
-			await performOcr(imageOutputDir, ocrOutputDir, sendProgress);
+			const ocrOriginalDir = path.join(tempDir, 'ocr_original');
+			await performOcr(imageOutputDir, ocrOriginalDir, sendProgress);
 
 			// Load dictionaries
 			const { dictionary: correctionDict, loaded: correctionLoaded } =
@@ -118,7 +118,9 @@ app.post('/api/convert', async (c) => {
 			}
 
 			// Apply corrections to OCR files
-			await applyCorrectionsToOcrFiles(ocrOutputDir, correctionDict, sendProgress);
+			const ocrCorrectedDir = path.join(tempDir, 'ocr_corrected');
+			await applyCorrectionsToOcrFiles(ocrOriginalDir, ocrCorrectedDir, correctionDict, sendProgress);
+			const ocrDirForEpub = correctionLoaded ? ocrCorrectedDir : ocrOriginalDir;
 
 			const { dictionary: vietnameseDict, loaded: vietnameseLoaded } =
 				await loadVietnameseDictionary();
@@ -129,7 +131,7 @@ app.post('/api/convert', async (c) => {
 			}
 
 			// Calculate page ranges
-			const ocrFiles = await fs.readdir(ocrOutputDir);
+			const ocrFiles = await fs.readdir(ocrOriginalDir);
 			const totalPdfPages = ocrFiles.length;
 			const bookEndPage = totalPdfPages - pageOffset;
 			const bookStartPage = 1 - pageOffset;
@@ -147,7 +149,7 @@ app.post('/api/convert', async (c) => {
 			sendProgress('Generating EPUB...');
 			const { epub, abnormalWords } = await generateEpub(
 				finalChapters,
-				ocrOutputDir,
+				ocrDirForEpub,
 				pageOffset,
 				totalPdfPages,
 				vietnameseDict,

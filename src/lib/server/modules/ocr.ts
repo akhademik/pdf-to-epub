@@ -70,7 +70,8 @@ export async function performOcr(
  * Applies corrections to all OCR text files.
  */
 export async function applyCorrectionsToOcrFiles(
-	ocrDir: string,
+	sourceDir: string,
+	destDir: string,
 	correctionDict: { [key: string]: string },
 	sendProgress: (msg: string) => void
 ): Promise<void> {
@@ -79,19 +80,21 @@ export async function applyCorrectionsToOcrFiles(
 		return;
 	}
 
+	await fs.mkdir(destDir, { recursive: true });
 	sendProgress('Applying corrections to OCR files...');
-	const ocrFiles = await fs.readdir(ocrDir);
+	const ocrFiles = await fs.readdir(sourceDir);
 
 	for (let i = 0; i < ocrFiles.length; i++) {
 		const ocrFile = ocrFiles[i];
-		const ocrPath = path.join(ocrDir, ocrFile);
+		const sourcePath = path.join(sourceDir, ocrFile);
+		const destPath = path.join(destDir, ocrFile);
 		const percentage = Math.round(((i + 1) / ocrFiles.length) * 100);
 		sendProgress(`Correcting file ${i + 1}/${ocrFiles.length} (${percentage}%)...`);
 
 		try {
-			const text = await fs.readFile(ocrPath, 'utf-8');
+			const text = await fs.readFile(sourcePath, 'utf-8');
 			const correctedText = applyCorrections(text, correctionDict);
-			await fs.writeFile(ocrPath, correctedText);
+			await fs.writeFile(destPath, correctedText);
 		} catch (error) {
 			const message = error instanceof Error ? error.message : 'Unknown error';
 			sendProgress(`Warning: Could not correct file ${ocrFile}: ${message}`);
