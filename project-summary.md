@@ -36,7 +36,7 @@ The application allows users to upload a PDF file, provide a custom table of con
       - Uses `jszip` to construct an EPUB file from the extracted and corrected text (from `ocr_corrected`, or `ocr_original` if no corrections were applied), following the structure defined by the user's TOC. The EPUB is styled with a custom CSS file (`epub-style.css`) and uses the first page of the PDF as the cover image.
       - If no TOC is provided, it treats the entire book as a single chapter. It also automatically adds "Introduction" and "Appendices" sections for pages not covered by the user's TOC.
       - Saves the generated `.epub` file to the temporary directory.
-      - Identifies and logs "abnormal" words (words not found in `viet-dict.txt` or `ignore-dict.json`) to a separate file for later review.
+      - Identifies and logs "abnormal" words (words not found in `viet-dict.txt`, `eng-dict.txt` or `ignore-dict.json`) to a separate file for later review. The addition of `eng-dict.txt` helps in skipping common English words during this check.
       - Streams progress updates back to the client using SSE.
       - Finally, it sends a message with the unique download URL for the generated file, now using the new temporary directory name in the URL.
     - **`/api/download/:dir/:filename` (GET)**:
