@@ -28,7 +28,7 @@ The application allows users to upload a PDF file, provide a custom table of con
     - **`/api/convert` (POST)**:
       - Receives the uploaded file and data.
       - Validates the input.
-      - Creates a temporary directory for processing based on a hash of the PDF file name.
+      - **Updated:** Creates a temporary directory for processing named after the sanitized book title and an 8-digit hash of the original PDF filename (e.g., `Book_Title-a1b2c3d4`).
       - Saves the uploaded PDF to the temporary directory.
       - Uses the `pdf-to-img` library to convert each page of the PDF into a PNG image.
       - Uses `tesseract.js` to perform OCR on each image to extract the text content.
@@ -38,10 +38,9 @@ The application allows users to upload a PDF file, provide a custom table of con
       - Saves the generated `.epub` file to the temporary directory.
       - Identifies and logs "abnormal" words (words not found in `viet-dict.txt` or `ignore-dict.json`) to a separate file for later review.
       - Streams progress updates back to the client using SSE.
-      - Finally, it sends a message with the unique download URL for the generated file.
-    - **`/api/download/:hash/:filename` (GET)**:
-      - Serves the generated EPUB file from the temporary directory.
-      - The URL includes a hash to ensure that users can only download files they have generated.
+      - Finally, it sends a message with the unique download URL for the generated file, now using the new temporary directory name in the URL.
+    - **`/api/download/:dir/:filename` (GET)**:
+      - **Updated:** Serves the generated EPUB file from the temporary directory. The URL now includes the temporary directory name (`:dir`) and the filename. A security check is implemented to prevent path traversal.
 
 ## Key Dependencies
 
