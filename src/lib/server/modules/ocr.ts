@@ -74,10 +74,11 @@ export async function applyCorrectionsToOcrFiles(
 	destDir: string,
 	correctionDict: { [key: string]: string },
 	sendProgress: (msg: string) => void
-): Promise<void> {
+): Promise<Map<string, { corrected: string; pages: Set<number> }>> {
+	const aggregatedReport = new Map<string, { corrected: string; pages: Set<number> }>();
 	if (Object.keys(correctionDict).length === 0) {
 		sendProgress('No correction dictionary loaded, skipping correction step.');
-		return;
+		return aggregatedReport;
 	}
 
 	await fs.mkdir(destDir, { recursive: true });
@@ -92,13 +93,24 @@ export async function applyCorrectionsToOcrFiles(
 		sendProgress(`Correcting file ${i + 1}/${ocrFiles.length} (${percentage}%)...`);
 
 		try {
+			const pageNumber = parseInt(ocrFile.replace('page-', '').replace('.txt', ''));
 			const text = await fs.readFile(sourcePath, 'utf-8');
-			const correctedText = applyCorrections(text, correctionDict);
+			const { correctedText, report } = applyCorrections(text, correctionDict, pageNumber);
 			await fs.writeFile(destPath, correctedText);
+
+			for (const [wrong, data] of report.entries()) {
+				const existingEntry = aggregatedReport.get(wrong) || {
+					corrected: data.corrected,
+					pages: new Set<number>()
+				};
+				data.pages.forEach((page) => existingEntry.pages.add(page));
+				aggregatedReport.set(wrong, existingEntry);
+			}
 		} catch (error) {
 			const message = error instanceof Error ? error.message : 'Unknown error';
 			sendProgress(`Warning: Could not correct file ${ocrFile}: ${message}`);
 		}
 	}
 	sendProgress('Correction of OCR files complete.');
+	return aggregatedReport;
 }

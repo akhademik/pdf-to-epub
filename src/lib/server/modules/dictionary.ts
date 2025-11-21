@@ -8,8 +8,13 @@ import { VIETNAMESE_CHARACTERS } from './config';
  * Applies text corrections using a dictionary.
  * Preserves capitalization (e.g., "Apple" → "Táo" if "apple": "táo").
  */
-export function applyCorrections(text: string, dictionary: Record<string, string>): string {
+export function applyCorrections(
+	text: string,
+	dictionary: Record<string, string>,
+	pageNumber: number
+): { correctedText: string; report: Map<string, { corrected: string; pages: Set<number> }> } {
 	let correctedText = text;
+	const report = new Map<string, { corrected: string; pages: Set<number> }>();
 
 	for (const wrong in dictionary) {
 		const correct = dictionary[wrong];
@@ -27,16 +32,25 @@ export function applyCorrections(text: string, dictionary: Record<string, string
 			? new RegExp(escapedWrong, 'gi')
 			: new RegExp(`\\b${escapedWrong}\\b`, 'gi');
 
+		let matchOccurred = false;
 		correctedText = correctedText.replace(regex, (match) => {
+			matchOccurred = true;
+
 			// Capitalize if original matched word starts with an uppercase letter
 			if (new RegExp(`[${VIETNAMESE_CHARACTERS.toUpperCase()}]`).test(match[0])) {
 				return capitalizeFirst(correct);
 			}
 			return correct;
 		});
+
+		if (matchOccurred) {
+			const reportEntry = report.get(wrong) || { corrected: correct, pages: new Set<number>() };
+			reportEntry.pages.add(pageNumber);
+			report.set(wrong, reportEntry);
+		}
 	}
 
-	return correctedText;
+	return { correctedText, report };
 }
 
 /**

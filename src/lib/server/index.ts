@@ -123,7 +123,22 @@ app.post('/api/convert', async (c) => {
 
 			// Apply corrections to OCR files
 			const ocrCorrectedDir = path.join(tempDir, 'ocr_corrected');
-			await applyCorrectionsToOcrFiles(ocrOriginalDir, ocrCorrectedDir, correctionDict, sendProgress);
+			const correctionReport = await applyCorrectionsToOcrFiles(
+				ocrOriginalDir,
+				ocrCorrectedDir,
+				correctionDict,
+				sendProgress
+			);
+			if (correctionReport.size > 0) {
+				const reportPath = path.join(tempDir, 'correction-report.txt');
+				let reportContent = 'Correction Report:\n\n';
+				for (const [wrong, { corrected, pages }] of correctionReport.entries()) {
+					const sortedPages = Array.from(pages).sort((a, b) => a - b);
+					reportContent += `${wrong} -> ${corrected} (on pages: ${sortedPages.join(', ')})\n`;
+				}
+				await fs.writeFile(reportPath, reportContent);
+				sendProgress('Correction report generated.');
+			}
 			const ocrDirForEpub = correctionLoaded ? ocrCorrectedDir : ocrOriginalDir;
 
 			const { dictionary: vietnameseDict, loaded: vietnameseLoaded } =
